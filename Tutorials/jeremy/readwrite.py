@@ -15,6 +15,7 @@
 # images = image_reader.ReadList(['train_0','train_1','train_2','train_3'])
 
 import cv2
+import numpy as np
 
 # This class reads the CSV file containing the labels of each image.
 class LabelReader:
@@ -59,11 +60,16 @@ class LabelReader:
   def GetAllData(self):
     return (self.names, self.labels)
 
+  # check whether name exists in label CSV file
+  def HasName(self, name):
+    return name in self.names
+
 # This class takes in an SCP file and reads images in either TIFF or JPEG format.
 class ImageReader:
 
   names = []
   filenames = []
+  shape = []
 
   def __init__(self, scp_filename):
     self.Open(scp_filename)
@@ -77,19 +83,30 @@ class ImageReader:
           raise ValueError('File ' + scp_filename + ' has incorrect format')
         self.names.append(x[0])
         self.filenames.append(x[1])
+    image = self.Read(self.names[0])
+    self.shape = image.shape
 
   # read single image
   def Read(self, image_name):
     return cv2.imread(self.filenames[self.names.index(image_name)],cv2.IMREAD_UNCHANGED)
 
   # read list of images
+  #def ReadList(self, image_names):
+  #  image_list = []
+  #  for i in range(len(image_names)):
+  #    image_list.append(self.Read(image_names[i]))
+  #  return image_list
   def ReadList(self, image_names):
-    image_list = []
+    image_list = np.empty([len(image_names)]+list(self.shape))
     for i in range(len(image_names)):
-      image_list.append(self.Read(image_names[i]))
+      image_list[i,:] = self.Read(image_names[i])
     return image_list
 
   # return list of all image names
   def GetNames(self):
     return self.names
+
+  # check whether name exists in image SCP file
+  def HasName(self, name):
+    return name in self.names
 
