@@ -14,6 +14,7 @@ linear_model = W * x + b
 y = tf.placeholder(tf.float32)
 # loss
 loss = tf.reduce_sum(tf.square(linear_model - y)) # sum of the squares
+prediction = 1/(1+tf.exp(-linear_model))
 # optimizer
 optimizer = tf.train.GradientDescentOptimizer(0.01)
 train = optimizer.minimize(loss)
@@ -28,5 +29,5 @@ for i in range(1000):
   sess.run(train, {x:x_train, y:y_train})
 
 # evaluate training accuracy
-curr_W, curr_b, curr_loss  = sess.run([W, b, loss], {x:x_train, y:y_train})
-print("W: %s b: %s loss: %s"%(curr_W, curr_b, curr_loss))
+curr_W, curr_b, curr_loss,pred  = sess.run([W, b, loss,prediction], {x:x_train, y:y_train})
+print("W: %s b: %s loss: %s pred is %s "%(curr_W, curr_b, curr_loss,pred))
