@@ -27,7 +27,7 @@ poolingWindows ={1: [[1,2,2,1],[1,2,2,1]],2 :[[1,2,2,1],[1,2,2,1]]}
 describes the stride"""
 
 #Create a deep Convnet
-convNet = ConvLib.constructConvNet(images,layerWeights,poolingWindows={})
+convNet = ConvLib.constructConvNet(images,layerWeights=layerWeights,poolingWindows=poolingWindows,ReLUON=True)
 denseLayer = ConvLib.createFullConnectedDenseLayer(convNet, [7 * 7 * 64, 1024])
 """possibly add dropout
 keep_prob = tf.placeholder(tf.float32)

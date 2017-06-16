@@ -59,7 +59,7 @@ def max_pool(x,ksize=[1,2,2,1],strides=[1,2,2,1]):
 
 
 
-def constructConvNet(X,layerWeights,poolingWindows={}):
+def constructConvNet(X,layerWeights,poolingWindows={},ReLUON=True):
   """ This functions creates a Deep convolutional network upto a dense layer
   	 Inputs :
      X : input
@@ -77,7 +77,10 @@ def constructConvNet(X,layerWeights,poolingWindows={}):
          activation = conv2d(X,W) + b
       else:
         activation = conv2d(hiddenLayers[count-1],W)+b
-      non_linearActivation = tf.nn.relu(activation)
+      if ReLUON:  
+        non_linearActivation = tf.nn.relu(activation)
+      else:
+        non_linearActivation = tf.nn.sigmoid(activation) 
       if len(poolingWindows) ==0:
         hiddenLayers[count] = max_pool(non_linearActivation)
       else:
