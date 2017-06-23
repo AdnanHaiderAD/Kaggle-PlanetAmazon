@@ -69,9 +69,10 @@ class MiniBatch:
     images = self.image_reader.ReadList(mini_batch_names)
     return (images, labels)
 
-  def FillFeedDict(self, size, r_pl, g_pl, b_pl, i_pl, atmos_pl, other_labels_pl):
+  def FillFeedDict(self, size, image_pl, atmos_pl, other_labels_pl):
     images, labels = self.GetMinibatch(size)
 
+'''
     # convert images to placeholder compatable format
     b_data = np.empty([len(images), images.shape[1]*images.shape[2]])
     g_data = np.empty([len(images), images.shape[1]*images.shape[2]])
@@ -82,6 +83,7 @@ class MiniBatch:
       g_data[i,:] = images[i,:,:,1].flatten()
       r_data[i,:] = images[i,:,:,2].flatten()
       i_data[i,:] = images[i,:,:,3].flatten()
+'''
 
     # convert labels to {0,1} vectors
     atmos_data = np.zeros([len(images), 4])
@@ -125,7 +127,7 @@ class MiniBatch:
         else:
           raise ValueError('Error: unrecognised label %s' % labels[i])
     
-    feed_dict = {b_pl: b_data, g_pl: g_data, r_pl: r_data, i_pl: i_data, atmos_pl: atmos_data, other_pl: other_labels_data}
+    feed_dict = {image_pl: images, atmos_pl: atmos_data, other_labels_pl: other_labels_data}
     return feed_dict
 
   def Reset(self):

@@ -77,12 +77,31 @@ def build_loss_CE_independent(softmax_labels, softmax_logits, sigmoid_labels, si
 
   return [softmax_ce, sigmoid_ce]
 
-def evaluate_f2(softmax_logits, sigmoid_logits, atmos_pl, other_labels_pl):
+def evaluate_f2(softmax_logits, sigmoid_logits, labels_pl):
   predictions = get_map_predictions(softmax_logits, sigmoid_logits)
+  predictions_1ofK = concat_atmos_others(predictions[0], predictions[1])
+  
+  # compute true positives
+  tp = tf.reduce_sum(tf.cast(tf.logical_and(tf.equal(predictions_1ofK, tf.constant(1, shape=predictions_1ofK.shape)), tf.equal(labels_pl, tf.constant(1, shape=labels_pl.shape))), tf.float32), 0)
+  # compute false positives
+  fp = tf.reduce_sum(tf.cast(tf.logical_and(tf.equal(predictions_1ofK, tf.constant(1, shape=predictions_1ofK.shape)), tf.equal(labels_pl, tf.constant(0, shape=labels_pl.shape))), tf.float32), 0)
+  # compute false negatives
+  fn = tf.reduce_sum(tf.cast(tf.logical_and(tf.equal(predictions_1ofK, tf.constant(0, shape=predictions_1ofK.shape)), tf.equal(labels_pl, tf.constant(1, shape=labels_pl.shape))), tf.float32))
+
+  # compute precision
+  precision = tp / (tp + fp)
+  # compute recall
+  recall = tp / (tp + fn)
+
+  # compute f2
+  beta = 2
+  f2 = (1+beta^2) * precision * recall / (beta^2 * precision + recall)
+
 
 def evaluate_cer(softmax_logits, sigmoid_logits, atmos_pl, other_labels_pl):
   predictions = get_map_predictions(softmax_logits, sigmoid_logits)
-  other_labels_accuracy = tf.reduce_mean(tf.cast(tf.equal(predictions[1], other_labels_pl)))
+  other_labels_accuracy = tf.reduce_mean(tf.cast(tf.equal(predictions[1], other_labels_pl), tf.float32), 0)
+  atmos_accuracy = tf.reduce_mean(tf.cast(tf.equal(predictions[0], atmos_pl), tf.float32))
 
 def get_map_prediction(softmax_logits, sigmoid_logits):
   """Build graph to get most likely labels, where atmostphic conditions are modelled by a softmax, and other labels are modelled by individual sigmoids
@@ -97,4 +116,11 @@ def get_map_prediction(softmax_logits, sigmoid_logits):
   other_labels_prediction = tf.round(tf.nn.sigmoid(sigmoid_logits))
 
   return [atmos_prediction, other_labels_prediction]
+
+def argmax_to_1ofK(x, num_classes):
+  return tf.one_hot(x, num_classes)
+
+def concat_atmos_others(atmos_argmax, other_labels_predictions):
+  atmos_1ofK = argmax_to_1ofK(atmox_argmax, 4)
+  return tf.concat([atmos_1ofK, other_labels_predictions], 1)
 
