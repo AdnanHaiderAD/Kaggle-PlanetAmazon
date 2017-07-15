@@ -1,0 +1,15 @@
+import tensorflow as tf
+
+def SaveVariable (filename, variables, variablenames, sess):
+  name_to_variable_dict = {}
+  assert len(variables) == len(variablenames)
+  for i in range(0, len(variables)):
+    name_to_variable_dict[variablenames[i]] = variables[i]
+
+  saver = tf.train.Saver(name_to_variable_dict)
+  saver.save(sess, filename)
+
+def LoadVariable (filename, variable, variablename, sess):
+  saver = tf.train.Saver({variablename: variable})
+  saver.restore(sess, filename)
+

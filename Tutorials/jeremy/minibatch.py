@@ -8,7 +8,7 @@
 # x.Shuffle()
 
 # // Get next mini-batch
-# feed_dict = x.FillFeedDict(100, r_pl, g_pl, b_pl, i_pl, atmos_pl, other_labels_pl)
+# feed_dict = x.FillFeedDict(mini-batch size, image_pl, atmos_pl, other_labels_pl)
 
 # // Reset remaining data to the original list of data
 # x.Reset()
@@ -88,46 +88,64 @@ class MiniBatch:
     # convert labels to {0,1} vectors
     atmos_data = np.zeros([len(images), 4])
     other_labels_data = np.zeros([len(images), 13])
+    all_labels_data = np.zeros([len(images), 17])
     for i in range(len(labels)):
       for j in range(len(labels[i])):
         if labels[i][j] == 'cloudy':
           atmos_data[i,0] = 1.0
+          all_labels_data[i,0] = 1.0
         elif labels[i][j] == 'clear':
           atmos_data[i,1] = 1.0
+          all_labels_data[i,1] = 1.0
         elif labels[i][j] == 'haze':
           atmos_data[i,2] = 1.0
+          all_labels_data[i,2] = 1.0
         elif labels[i][j] == 'partly_cloudy':
           atmos_data[i,3] = 1.0
+          all_labels_data[i,3] = 1.0
         elif labels[i][j] == 'primary':
           other_labels_data[i,0] = 1.0
+          all_labels_data[i,4] = 1.0
         elif labels[i][j] == 'water':
           other_labels_data[i,1] = 1.0
+          all_labels_data[i,5] = 1.0
         elif labels[i][j] == 'habitation':
           other_labels_data[i,2] = 1.0
+          all_labels_data[i,6] = 1.0
         elif labels[i][j] == 'agriculture':
           other_labels_data[i,3] = 1.0
+          all_labels_data[i,7] = 1.0
         elif labels[i][j] == 'road':
           other_labels_data[i,4] = 1.0
+          all_labels_data[i,8] = 1.0
         elif labels[i][j] == 'cultivation':
           other_labels_data[i,5] = 1.0
+          all_labels_data[i,9] = 1.0
         elif labels[i][j] == 'bare_ground':
           other_labels_data[i,6] = 1.0
+          all_labels_data[i,10] = 1.0
         elif labels[i][j] == 'slash_burn':
           other_labels_data[i,7] = 1.0
+          all_labels_data[i,11] = 1.0
         elif labels[i][j] == 'selective_logging':
           other_labels_data[i,8] = 1.0
+          all_labels_data[i,12] = 1.0
         elif labels[i][j] == 'blooming':
           other_labels_data[i,9] = 1.0
+          all_labels_data[i,13] = 1.0
         elif labels[i][j] == 'conventional_mine':
           other_labels_data[i,10] = 1.0
+          all_labels_data[i,14] = 1.0
         elif labels[i][j] == 'artisinal_mine':
           other_labels_data[i,11] = 1.0
+          all_labels_data[i,15] = 1.0
         elif labels[i][j] == 'blow_down':
           other_labels_data[i,12] = 1.0
+          all_labels_data[i,16] = 1.0
         else:
           raise ValueError('Error: unrecognised label %s' % labels[i])
     
-    feed_dict = {image_pl: images, atmos_pl: atmos_data, other_labels_pl: other_labels_data}
+    feed_dict = {image_placeholder: images, label_placeholder: all_labels_data}
     return feed_dict
 
   def Reset(self):
