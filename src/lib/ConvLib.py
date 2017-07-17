@@ -91,29 +91,48 @@ def constructConvNet(X,layerWeights,poolingWindows={},ReLUON=True):
 
 def createFullConnectedDenseLayer(convNetLayer, dims):
   """ inputs:  Convetnet layer, shape : dimensions of the weight matrix [ inputdim, outputdim]"""
-  W_fc1 = weight_variable(dims)
-  b_fc1 = bias_variable(dims[1:])
-  h_pool2_flat = tf.reshape(convNetLayer, [-1, dims[0]])
-  h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+  with tf.name_scope('denselayer'):
+    W_fc1 = weight_variable(dims)
+    b_fc1 = bias_variable(dims[1:])
+    h_pool2_flat = tf.reshape(convNetLayer, [-1, dims[0]])
+    h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
   return h_fc1
 
-def constructObjectiveFunction(DenseLayer, DenseLayer_dim,classes,Y_cloudy,Y_Atomosphere,Y_rest):
-	""" assumes the labels are partioned as follows Y =(y1,y2,...yk) -> y1<-cloudy,(y2..y4)<-Y-Atmosphere
-	"""
-	W_cloudy = weight_variable([DenseLayer_dim, 1])
-	b_cloudy = bias_variable([1])
-	output_c = tf.matmul(DenseLayer,W_cloudy)+ b_cloudy
-	loss_c = tf.nn.sigmoid_cross_entropy_with_logits(labels=Y_cloudy, logits=output_c)
+def cloudy_logit(DenseLayer,DenseLayer_dim):
+  """outputs the cloudy computational graph"""
+  with tf.name_scope('cloudy'):
+    W_cloudy = weight_variable([DenseLayer_dim, 1])
+    b_cloudy = bias_variable([1])
+    output_c = tf.matmul(DenseLayer,W_cloudy)+ b_cloudy
+  return output_c
 
-	W_Atmosphere = weight_variable([DenseLayer_dim,3])
-	b_Atmosphere = 	bias_variable([3])
-	output_Atmosphere = tf.matmul(DenseLayer,W_Atmosphere)+ b_Atmosphere
-	loss_Atmosphere = tf.nn.softmax_cross_entropy_with_logits(labels=Y_Atomosphere, logits=output_Atmosphere)
+def atmos_logit(DenseLayer,DenseLayer_dim):
+  """ outputs  atmosphere nodes (y2..y4) """
+  with tf.name_scope('atmosphere'):
+    W_Atmosphere = weight_variable([DenseLayer_dim,3])
+    b_Atmosphere =  bias_variable([3])
+    output_Atmosphere = tf.matmul(DenseLayer,W_Atmosphere)+ b_Atmosphere
+  return output_Atmosphere
+  
+def land_logit(DenseLayer,DenseLayer_dim):
+  """outputs the various land uses """
+  with tf.name_scope('atmosphere'):
+    W_rest = weight_variable([DenseLayer_dim,13])
+    b_rest = bias_variable([13])
+    output_R = tf.matmul(DenseLayer,W_rest)+ b_rest 
+  return output_R
+ 
+def constructObjectiveFunction(cloudy_output, atmosphere_output,rest_output,Y_cloudy,Y_Atomosphere,Y_rest):
+  """ assumes the labels are partioned as follows Y =(y1,y2,...yk) -> y1<-cloudy,(y2..y4)<-Y-Atmosphere"""
+  loss_c = tf.nn.sigmoid_cross_entropy_with_logits(labels=Y_cloudy,logits=cloudy_output)
+  loss_Atmosphere = tf.nn.softmax_cross_entropy_with_logits(labels=Y_Atomosphere,logits=atmosphere_output)
+  loss_R = tf.nn.sigmoid_cross_entropy_with_logits(labels=Y_rest,logits=rest_output)
+  loss = loss_c + (1-Y_cloudy) *(loss_Atmosphere + loss_R)
+  return loss
 
-	W_rest = weight_variable([DenseLayer_dim,classes-4])
-	b_rest = bias_variable([classes-4])
-	output_R = tf.matmul(DenseLayer,W_rest)+ b_rest
-	loss_R = f.nn.sigmoid_cross_entropy_with_logits(labels=Y_rest, logits=output_R)
-
-	loss = loss_c + (1-Y_cloudy) *(loss_Atmosphere + loss_R)
-	return loss
+def predictLabels(cloudy_output,atmosphere_output,rest_output):
+  other_amosphere_predict = tf.one_hot(tf.argmax(atmosphere_output),3);
+  other_labels_predict = tf.round(tf.sigmoid(rest_output))
+  other_prediction = tf.concat([tf.constant([0]), other_amosphere_predict,other_labels_predict],0) 
+  output=tf.cond(tf.sigmoid(cloudy_output) > 0 , lambda: tf.constant([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),lambda:other_prediction)
+  return output
