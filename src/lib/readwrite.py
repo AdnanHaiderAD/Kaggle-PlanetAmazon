@@ -91,7 +91,6 @@ class ImageReader:
 
   # read single image
   def Read(self, image_name):
-    print('here2 %d' % self.image_dim)
     return cv2.resize(cv2.imread(self.filenames[self.names.index(image_name)],cv2.IMREAD_UNCHANGED), (self.image_dim, self.image_dim))
 
   # read list of images
