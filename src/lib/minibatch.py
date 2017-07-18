@@ -33,7 +33,7 @@ class MiniBatch:
   def Open(self, scp_filename, csv_filename, seed=100, image_dim=256):
     self.label_reader = readwrite.LabelReader(csv_filename)
     self.image_reader = readwrite.ImageReader(scp_filename, image_dim)
-    self.names = self.label_reader.GetNames()
+    self.names = self.image_reader.GetNames()
     #self.Check()
     self.remaining = list(self.names)
     random.seed(seed)
