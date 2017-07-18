@@ -74,9 +74,10 @@ class ImageReader:
   image_dim = 256
 
   def __init__(self, scp_filename, image_dim=256):
-    self.Open(scp_filename, image_dim)
+    self.Open(scp_filename, image_dim=image_dim)
 
   def Open(self, scp_filename, image_dim=256):
+    self.image_dim = image_dim
     with open(scp_filename) as file:
       for line in file:
         line = line.rstrip()
@@ -87,11 +88,11 @@ class ImageReader:
         self.filenames.append(x[1])
     image = self.Read(self.names[0])
     self.shape = image.shape
-    self.image_dim = 256
 
   # read single image
   def Read(self, image_name):
-    image = cv2.imread(self.filenames[self.names.index(image_name)],cv2.IMREAD_UNCHANGED)
+    print('here2 %d' % self.image_dim)
+    return cv2.resize(cv2.imread(self.filenames[self.names.index(image_name)],cv2.IMREAD_UNCHANGED), cv2.size(self.image_dim, self.image_dim))
 
   # read list of images
   #def ReadList(self, image_names):
