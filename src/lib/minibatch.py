@@ -66,6 +66,7 @@ class MiniBatch:
     mini_batch_names = self.remaining[0:min(len(self.remaining), size)]
     del self.remaining[0:min(len(self.remaining), size)]
     labels = self.label_reader.ReadList(mini_batch_names)
+    binlabels = self.createBinaryLabels(labels)
     images = self.image_reader.ReadList(mini_batch_names)
     return (images, np.array(binlabels))
 
