@@ -103,7 +103,7 @@ def cloudy_logit(DenseLayer,DenseLayer_dim):
   with tf.name_scope('cloudy'):
     W_cloudy = weight_variable([DenseLayer_dim, 1])
     b_cloudy = bias_variable([1])
-    output_c = tf.matmul(DenseLayer,W_cloudy)+ b_cloudy
+    output_c = tf.add(tf.matmul(DenseLayer,W_cloudy),b_cloudy,name='cloudy_output')
   return output_c
 
 def atmos_logit(DenseLayer,DenseLayer_dim):
@@ -111,15 +111,15 @@ def atmos_logit(DenseLayer,DenseLayer_dim):
   with tf.name_scope('atmosphere'):
     W_Atmosphere = weight_variable([DenseLayer_dim,3])
     b_Atmosphere =  bias_variable([3])
-    output_Atmosphere = tf.matmul(DenseLayer,W_Atmosphere)+ b_Atmosphere
+    output_Atmosphere = tf.add(tf.matmul(DenseLayer,W_Atmosphere),b_Atmosphere,name='atmos_output')
   return output_Atmosphere
   
 def land_logit(DenseLayer,DenseLayer_dim):
   """outputs the various land uses """
-  with tf.name_scope('atmosphere'):
+  with tf.name_scope('land'):
     W_rest = weight_variable([DenseLayer_dim,13])
     b_rest = bias_variable([13])
-    output_R = tf.matmul(DenseLayer,W_rest)+ b_rest 
+    output_R = tf.add(tf.matmul(DenseLayer,W_rest),b_rest,name='land_output') 
   return output_R
  
 def constructObjectiveFunction(cloudy_output, atmosphere_output,rest_output,Y_cloudy,Y_Atomosphere,Y_rest):

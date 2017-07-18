@@ -15,6 +15,9 @@ import savegraph
 inputdatafile = sys.argv[1]
 labelfile = sys.argv[2]
 
+inputdatafile = sys.argv[1]
+labelfile = sys.argv[2]
+
 #define appropiate placeholders for input and output
 classes =17 # for  planetary dataset, classes = 17
 height = 128
@@ -24,23 +27,13 @@ Y = tf.placeholder(tf.int32, shape=[None,classes])
 images,Y_cloudy,Y_Atomosphere,Y_rest  = ConvLib.placeholder_Planetaryinputs(height,width,channels,classes)
 
 
+sess = tf.InteractiveSession()
+graph = savegraph.Load('model',sess)
 
+output_Y_cloudy = graph.get_operation_by_name('cloudy/cloudy_output')
+output_Y_atmosphere = graph.get_operation_by_name('atmosphere/atmos_output')
+output_land_logit =graph.get_operation_by_name('land/land_output')
 
-# Each number in the dictionary corresponds to layer id
-layerWeights = {1: [5,5,4,64],2: [5,5,64,32], 3:[5,5,32,16] }
-poolingWindows ={1: [[1,2,2,1],[1,2,2,1]],2 :[[1,2,2,1],[1,2,2,1]],3: [[1,2,2,1],[1,2,2,1]]}
-denseLayerDim = 1024
-"""Note in Poolingwindows the first tensor in [[1,2,2,1],[1,2,2,1]] descibes the shape of the pooling window while the second tensor
-describes the stride"""
-
-
-#Create a DNN architecture with intermediate layers acting as conv nets
-convNet = ConvLib.constructConvNet(images,layerWeights=layerWeights,poolingWindows=poolingWindows,ReLUON=True)
-denseLayer = ConvLib.createFullConnectedDenseLayer(convNet, [32* 32 * 16, denseLayerDim])
-output_Y_cloudy = ConvLib.cloudy_logit(denseLayer,denseLayerDim)
-output_Y_atmosphere = ConvLib.atmos_logit(denseLayer,denseLayerDim)
-output_land_logit =ConvLib.land_logit(denseLayer,denseLayerDim)
-output_Y_atmosphere
 
 objectiveFunc = ConvLib.constructObjectiveFunction(cloudy_output=output_Y_cloudy, atmosphere_output=output_Y_atmosphere,rest_output=output_land_logit,Y_cloudy=Y_cloudy,Y_Atomosphere=Y_Atomosphere,Y_rest=Y_rest)
 train_step = tf.train.AdamOptimizer(1e-4).minimize(objectiveFunc)
@@ -50,12 +43,6 @@ prediction =  ConvLib.predictLabels(cloudy_output=output_Y_cloudy,atmosphere_out
 correct_prediction = tf.equal(tf.argmax(prediction,1), tf.argmax(Y,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-
-
-"""" START TRAINING """
-#intialise variables
-sess = tf.InteractiveSession()
-sess.run(tf.global_variables_initializer())
 data_wrapper = minibatch.MiniBatch(inputdatafile, labelfile, seed=10 ,image_dim=128)
 for i in range(100):
   images_data,labels = data_wrapper.GetMinibatch(10)
@@ -69,4 +56,3 @@ for i in range(100):
 	print("step %d, training accuracy %g"%(i, training_accuracy))
   
 	 
-
