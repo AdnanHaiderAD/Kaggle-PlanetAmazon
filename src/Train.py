@@ -40,7 +40,7 @@ denseLayer = ConvLib.createFullConnectedDenseLayer(convNet, [32* 32 * 16, denseL
 output_Y_cloudy = ConvLib.cloudy_logit(denseLayer,denseLayerDim)
 output_Y_atmosphere = ConvLib.atmos_logit(denseLayer,denseLayerDim)
 output_land_logit =ConvLib.land_logit(denseLayer,denseLayerDim)
-output_Y_atmosphere
+
 
 objectiveFunc = ConvLib.constructObjectiveFunction(cloudy_output=output_Y_cloudy, atmosphere_output=output_Y_atmosphere,rest_output=output_land_logit,Y_cloudy=Y_cloudy,Y_Atomosphere=Y_Atomosphere,Y_rest=Y_rest)
 train_step = tf.train.AdamOptimizer(1e-4).minimize(objectiveFunc)
@@ -65,8 +65,7 @@ for i in range(100):
   	training_accuracy = accuracy.eval(feed_dict={images:images_data, Y:labels})
   	#save variable graph
   	savegraph.Save('model',sess)
-  	# graph.get_operation_by_name('cloudy/cloudy_output')
-	print("step %d, training accuracy %g"%(i, training_accuracy))
+  	print("step %d, training accuracy %g"%(i, training_accuracy))
   
 	 
 
