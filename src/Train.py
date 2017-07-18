@@ -16,8 +16,8 @@ labelfile = sys.argv[2]
 
 #define appropiate placeholders for input and output
 classes =17 # for  planetary dataset, classes = 17
-height = 256
-width = 256
+height = 128
+width = 128
 channels = 4
 Y = tf.placeholder(tf.int32, shape=[None,classes])
 images,Y_cloudy,Y_Atomosphere,Y_rest  = ConvLib.placeholder_Planetaryinputs(height,width,channels,classes)
@@ -35,7 +35,7 @@ describes the stride"""
 
 #Create a DNN architecture with intermediate layers acting as conv nets
 convNet = ConvLib.constructConvNet(images,layerWeights=layerWeights,poolingWindows=poolingWindows,ReLUON=True)
-denseLayer = ConvLib.createFullConnectedDenseLayer(convNet, [64* 64 * 64, denseLayerDim])
+denseLayer = ConvLib.createFullConnectedDenseLayer(convNet, [32* 32 * 64, denseLayerDim])
 output_Y_cloudy = ConvLib.cloudy_logit(denseLayer,denseLayerDim)
 output_Y_atmosphere = ConvLib.atmos_logit(denseLayer,denseLayerDim)
 output_land_logit =ConvLib.land_logit(denseLayer,denseLayerDim)
@@ -55,7 +55,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 #intialise variables
 sess = tf.InteractiveSession()
 sess.run(tf.global_variables_initializer())
-data_wrapper = minibatch.MiniBatch(inputdatafile, labelfile, seed=10)
+data_wrapper = minibatch.MiniBatch(inputdatafile, labelfile, seed=10 ,image_dim=128)
 for i in range(100):
   images_data,labels = data_wrapper.GetMinibatch(10)
   cloudy_label,atmos_label,rest_label = data_wrapper.createLabelpartitions(10,labels)
