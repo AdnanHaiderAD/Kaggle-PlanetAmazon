@@ -16,6 +16,7 @@
 
 import cv2
 import numpy as np
+import os
 
 # This class reads the CSV file containing the labels of each image.
 class LabelReader:
@@ -91,6 +92,8 @@ class ImageReader:
 
   # read single image
   def Read(self, image_name):
+    if not os.path.isfile(self.filenames[self.names.index(image_name)]):
+      raise ValueError('Cannot find file ' + self.filenames[self.names.index(image_name)])
     return cv2.resize(cv2.imread(self.filenames[self.names.index(image_name)],cv2.IMREAD_UNCHANGED), (self.image_dim, self.image_dim))
 
   # read list of images
