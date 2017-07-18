@@ -94,7 +94,10 @@ class ImageReader:
   def Read(self, image_name):
     if not os.path.isfile(self.filenames[self.names.index(image_name)]):
       raise ValueError('Cannot find file ' + self.filenames[self.names.index(image_name)])
-    return cv2.resize(cv2.imread(self.filenames[self.names.index(image_name)],cv2.IMREAD_UNCHANGED), (self.image_dim, self.image_dim))
+    image = cv2.imread(self.filenames[self.names.index(image_name)],cv2.IMREAD_UNCHANGED)
+    if image is None:
+      raise ValueError('Problem openning file ' + self.filenames[self.names.index(image_name)])
+    return cv2.resize(image, (self.image_dim, self.image_dim))
 
   # read list of images
   #def ReadList(self, image_names):
