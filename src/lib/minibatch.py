@@ -8,7 +8,7 @@
 # x.Shuffle()
 
 # // Get next mini-batch
-# feed_dict = x.FillFeedDict(100, r_pl, g_pl, b_pl, i_pl, atmos_pl, other_labels_pl)
+# feed_dict = x.FillFeedDict(mini-batch size, image_pl, atmos_pl, other_labels_pl)
 
 # // Reset remaining data to the original list of data
 # x.Reset()
@@ -67,12 +67,67 @@ class MiniBatch:
     del self.remaining[0:min(len(self.remaining), size)]
     labels = self.label_reader.ReadList(mini_batch_names)
     images = self.image_reader.ReadList(mini_batch_names)
-    return (images, labels)
+    return (images, np.array(binlabels))
+
+  def createBinaryLabels(self,labellist):
+    list =[]
+    binary_vector = np.zeros(17)
+    for label in labellist:
+      for elem in label:
+        if elem == 'cloudy':
+          binary_vector[0] = 1
+        elif elem =='clear':
+          binary_vector[1] = 1
+        elif elem =='haze':
+          binary_vector[2] = 1
+        elif elem =='partly_cloudy':
+          binary_vector[3] = 1
+        elif elem =='primary':
+          binary_vector[4] = 1
+        elif elem =='water':
+          binary_vector[5] = 1
+        elif elem =='habitation':
+          binary_vector[6] = 1
+        elif elem =='agriculture':
+          binary_vector[7] = 1
+        elif elem =='road':
+          binary_vector[8] = 1
+        elif elem =='cultivation':
+          binary_vector[9] = 1
+        elif elem =='slash_burn':
+          binary_vector[10] = 1
+        elif elem =='bare_ground':
+          binary_vector[11] = 1
+        elif elem =='selective_logging':
+          binary_vector[12] = 1
+        elif elem =='blooming':
+          binary_vector[13] = 1
+        elif elem =='conventional_mine':
+          binary_vector[14] = 1
+        elif elem =='artisinal_mine':
+          binary_vector[15] = 1
+        elif elem =='blow_down':
+          binary_vector[16] = 1
+        else:
+          raise ValueError('Error: unrecognised label %s' % labels[i])
+      list.append(binary_vector.tolist())
+    return list        
+   
+  def createLabelpartitions(self,size,labels):
+    cloudy = np.zeros([size,1])
+    atmos  = np.zeros([size,3])
+    others = mp.zeros([size,13])
+    for i in range(size):
+      label = labels[i]
+      cloudy[i] =label[0]
+      atmos[i] = label[1:4]
+      others[i] = label[4:]
+    return cloudy,atmos,others     
 
   def FillFeedDict(self, size, image_pl, atmos_pl, other_labels_pl):
     images, labels = self.GetMinibatch(size)
 
-'''
+    '''
     # convert images to placeholder compatable format
     b_data = np.empty([len(images), images.shape[1]*images.shape[2]])
     g_data = np.empty([len(images), images.shape[1]*images.shape[2]])
@@ -83,21 +138,22 @@ class MiniBatch:
       g_data[i,:] = images[i,:,:,1].flatten()
       r_data[i,:] = images[i,:,:,2].flatten()
       i_data[i,:] = images[i,:,:,3].flatten()
-'''
+    '''
 
     # convert labels to {0,1} vectors
-    atmos_data = np.zeros([len(images), 4])
+    cloud_data = np.zeros([len(images),1])
+    atmos_data = np.zeros([len(images), 3])
     other_labels_data = np.zeros([len(images), 13])
     for i in range(len(labels)):
       for j in range(len(labels[i])):
         if labels[i][j] == 'cloudy':
-          atmos_data[i,0] = 1.0
+          cloud_data[i,0] =1.0
         elif labels[i][j] == 'clear':
-          atmos_data[i,1] = 1.0
+          atmos_data[i,0] = 1.0
         elif labels[i][j] == 'haze':
-          atmos_data[i,2] = 1.0
+          atmos_data[i,1] = 1.0
         elif labels[i][j] == 'partly_cloudy':
-          atmos_data[i,3] = 1.0
+          atmos_data[i,2] = 1.0
         elif labels[i][j] == 'primary':
           other_labels_data[i,0] = 1.0
         elif labels[i][j] == 'water':
@@ -127,7 +183,7 @@ class MiniBatch:
         else:
           raise ValueError('Error: unrecognised label %s' % labels[i])
     
-    feed_dict = {image_pl: images, atmos_pl: atmos_data, other_labels_pl: other_labels_data}
+    feed_dict = {image_placeholder: images, label_placeholder: all_labels_data}
     return feed_dict
 
   def Reset(self):

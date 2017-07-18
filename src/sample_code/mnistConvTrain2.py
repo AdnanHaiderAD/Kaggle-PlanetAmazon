@@ -3,6 +3,8 @@ Note: all routines have been tested with Mnist except the objective function
 """
 import sys
 sys.path.append("/home/dawna/mah90/Kaggle/Kaggle-PlanetAmazon/src")
+sys.path.append("/home/dawna/mah90/Kaggle/Kaggle-PlanetAmazon/src/lib")
+
 import tensorflow as tf
 import ConvLib # import lib to create flexible convNets
 sess = tf.InteractiveSession()
@@ -60,6 +62,7 @@ sess.run(tf.global_variables_initializer())
 for i in range(2000):
         #get next batch
         batch = mnist.train.next_batch(10)
+        print batch
         if i%100 == 0:
                 train_accuracy = accuracy.eval(feed_dict={x:batch[0], y_: batch[1]})
                 print("step %d, training accuracy %g"%(i, train_accuracy))

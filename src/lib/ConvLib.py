@@ -21,7 +21,7 @@ def placeholder_Regularinputs(images,height,width,channels,classes):
   return images_placeholder, labels_placeholder
 
 #function to setup input and label nodes for the planetary multimodal classification task
-def placeholder_Planetaryinputs(images,height,width,channels,classes):
+def placeholder_Planetaryinputs(height,width,channels,classes):
   """Generate placeholder variables to represent the input tensors.
   These placeholders are used as inputs by the rest of the model building
   code and will be fed from the downloaded data in the .run() loop, below.
@@ -35,9 +35,9 @@ def placeholder_Planetaryinputs(images,height,width,channels,classes):
         # image  xcept the first dimension is now batch_size
   images_placeholder = tf.placeholder(tf.float32, shape=[None,height,width,channels])
   Y_cloudy = tf.placeholder(tf.int32, shape=[None,1])
-  Y_Atomosphere = tf.placeholder(tf.int32, shape=[None,3])
-  Y_rest = tf.placeholder(tf.int32, shape=[None,classes-4])
-  return images_placeholder,Y_cloudy,Y_Atomosphere,Y_rest 
+  Y_Atmosphere = tf.placeholder(tf.int32, shape=[None,3])
+  Y_rest = tf.placeholder(tf.int32, shape=[None,13])
+  return images_placeholder,Y_cloudy,Y_Atmosphere,Y_rest 
 
 #functions to create weight and bias objects
 def weight_variable(shape):
@@ -124,15 +124,22 @@ def land_logit(DenseLayer,DenseLayer_dim):
  
 def constructObjectiveFunction(cloudy_output, atmosphere_output,rest_output,Y_cloudy,Y_Atomosphere,Y_rest):
   """ assumes the labels are partioned as follows Y =(y1,y2,...yk) -> y1<-cloudy,(y2..y4)<-Y-Atmosphere"""
-  loss_c = tf.nn.sigmoid_cross_entropy_with_logits(labels=Y_cloudy,logits=cloudy_output)
-  loss_Atmosphere = tf.nn.softmax_cross_entropy_with_logits(labels=Y_Atomosphere,logits=atmosphere_output)
-  loss_R = tf.nn.sigmoid_cross_entropy_with_logits(labels=Y_rest,logits=rest_output)
-  loss = loss_c + (1-Y_cloudy) *(loss_Atmosphere + loss_R)
+  loss_c =  tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(Y_cloudy,tf.float32),logits=cloudy_output))
+  loss_Atmosphere =  tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=Y_Atomosphere,logits=atmosphere_output))
+  loss_R =  tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(Y_rest,tf.float32),logits=rest_output))
+  loss = loss_c + (1-tf.cast(Y_cloudy,tf.float32)) *(loss_Atmosphere + loss_R)
   return loss
 
 def predictLabels(cloudy_output,atmosphere_output,rest_output):
-  other_amosphere_predict = tf.one_hot(tf.argmax(atmosphere_output),3);
+  not_cloudy_label = tf.floor(tf.sigmoid(cloudy_output))
+  other_atmosphere_predict = tf.one_hot(tf.argmax(atmosphere_output,1),3)
   other_labels_predict = tf.round(tf.sigmoid(rest_output))
-  other_prediction = tf.concat([tf.constant([0]), other_amosphere_predict,other_labels_predict],0) 
-  output=tf.cond(tf.sigmoid(cloudy_output) > 0 , lambda: tf.constant([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),lambda:other_prediction)
+  other_predictions= tf.concat([not_cloudy_label, other_atmosphere_predict,other_labels_predict],1)
+  cloudy_label = tf.one_hot(tf.argmax(not_cloudy_label,1),17)
+  
+  cloudy_bool = tf.round(tf.sigmoid(cloudy_output))
+  bool_list = tf.tile(cloudy_bool,[-1,17])
+  predicate = bool_list>0.5
+  output = tf.where(predicate,cloudy_label,other_predictions)
+  #output=tf.cond(tf.sigmoid(cloudy_output) > 0 , lambda: tf.one_hot(not_cloudy_label,17),lambda: other_predictions)
   return output
