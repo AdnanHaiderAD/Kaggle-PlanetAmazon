@@ -1,0 +1,4 @@
+import cv2
+import re
+
+f = open('/home/dawna/mah90/Kaggle/Kaggle-PlanetAmazon/data/train_randomised.scp')
