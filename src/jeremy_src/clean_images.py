@@ -1,7 +1,7 @@
 import cv2
 import re
 
-f = open('/home/dawna/mah90/Kaggle/Kaggle-PlanetAmazon/data/train_randomised.scp')
+f = open('/home/mifs/jhmw2/kaggle/amazon/Kaggle-PlanetAmazon-Adnan/data/test.scp')
 
 with f as readfile:
   for line in readfile:
